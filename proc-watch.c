@@ -1,7 +1,7 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 int getPID(char *app);
@@ -17,6 +17,8 @@ int main(int argc, char *argv[])
 	printf("PID: %d\n", PID);
 }
 
+//do proc stat reader
+
 int getPID(char *app)
 {
 	char command[100];
@@ -26,9 +28,10 @@ int getPID(char *app)
 	
 	char buffer[256];
 
+	//Reads f command into buffer, then finding the last ' ' that is used and after that it just puts the last pid to PID variable
 	fgets(buffer, 256, f);
-
-	pid_t PID = strtoul(buffer,NULL,10);
+	char *p = strrchr(buffer, ' ') + 1;
+	pid_t PID = strtoul(p,NULL,10);
 	
 	
 	pclose(f);
