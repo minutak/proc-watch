@@ -5,20 +5,34 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#define hertz (sysconf(_SC_CLK_TCK))
+
+int utime;
+int stime;
+int cutime;
+int cstime;
+int startTime;
+int upTime;
 
 int getPID(char *app);
 int statReader(int PID);
+float calculation();
 
 int main(int argc, char *argv[])
 {
 	if (argc != 2)
 	{
-		printf("You cant choose only one app!\n");
+		printf("You can choose only one app!\n");
 		return 1;
 	}
+
 	int PID = getPID(argv[1]);
 	printf("PID: %d\n", PID);
+
 	statReader(PID);
+	float cpuUsage = calculation();
+
+	printf("Cpu usage is: %f\n", cpuUsage);
 }
 
 //do proc stat reader
@@ -30,29 +44,53 @@ int statReader(int PID)
 	if(f == NULL) return 1;
 	char buffer[2560];
 	int spaces = 0;
-	int utime;
-	int stime;
 
 	fgets(buffer, 2560, f);
 
 	//find the utime and stime(14, 15)
 	for(int i = 0; i < 2560; i++)
-	{
-		if(buffer[i] == ' ')
+	{	
+		if(spaces == 12)
 		{
-			spaces++;
+			utime = atoi(&buffer[i]);
 		}
 		if(spaces == 13)
 		{
-			utime = atoi(buffer);
+			stime = atoi(&buffer[i]);
 		}
 		if(spaces == 14)
 		{
-			stime = atoi(buffer);
+			cutime = atoi(&buffer[i]);
+		}
+		if (spaces == 16)
+		{
+			cstime = atoi(&buffer[i]);
+		}
+		if(spaces == 21)
+		{
+			startTime = atoi(&buffer[i]);
 			break;
 		}
+		if(isspace(buffer[i]))
+		{
+			spaces++;
+		}	
 	}
-	printf("Stime: %d, Utime: %d\n", stime, utime);
+	printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %d\n", utime, stime, cutime, cstime, startTime, hertz);
+}
+
+float calculation()
+{
+	float totalTime;
+	float seconds;
+	float cpuUsage;
+
+	totalTime = utime + stime;
+	totalTime += cutime + cstime;
+	seconds = upTime - (startTime / hertz);
+	cpuUsage = 100 * ((totalTime / hertz) / seconds);
+
+	return cpuUsage;
 }
 
 int getPID(char *app)
