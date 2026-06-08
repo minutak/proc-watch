@@ -18,6 +18,8 @@ int getPID(char *app);
 int statReader(int PID);
 float calculation();
 
+//Need to make cpu usage in some time interval
+
 int main(int argc, char *argv[])
 {
 	if (argc != 2)
@@ -28,11 +30,16 @@ int main(int argc, char *argv[])
 
 	int PID = getPID(argv[1]);
 	printf("PID: %d\n", PID);
-
+	
+	
 	statReader(PID);
-	float cpuUsage = calculation();
+	float usage1 = utime + stime;
+	sleep(5);
+	statReader(PID);
+	float usage2 = utime + stime;
 
-	printf("Cpu usage is: %f\n", cpuUsage);
+	float cpuUsage = ((usage2 - usage1) / hertz) / 5;
+	printf("CPU usage: %f\n", cpuUsage);
 }
 
 //do proc stat reader
@@ -76,21 +83,21 @@ int statReader(int PID)
 			spaces++;
 		}	
 	}
-	printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %d\n", utime, stime, cutime, cstime, startTime, hertz);
+	printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %ld\n", utime, stime, cutime, cstime, startTime, hertz);
+	return 0;
 }
 
 float calculation()
 {
 	float totalTime;
-	float seconds;
-	float cpuUsage;
+	float elapsedTime;
+
+	elapsedTime = upTime - (startTime / hertz);
 
 	totalTime = utime + stime;
 	totalTime += cutime + cstime;
-	seconds = upTime - (startTime / hertz);
-	cpuUsage = 100 * ((totalTime / hertz) / seconds);
-
-	return cpuUsage;
+	
+	return ((totalTime / hertz) / elapsedTime);
 }
 
 int getPID(char *app)
