@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
 
 #define hertz (sysconf(_SC_CLK_TCK))
 
@@ -38,7 +37,7 @@ int main(int argc, char *argv[])
 	stat = statReader(PID);
 	float usage2 = calculation(stat);
 
-	float cpuUsage = ((usage2 - usage1) / hertz) / 1 * 100;
+	float cpuUsage = ((usage2 - usage1) / hertz) * 100;
 	printf("CPU usage: %.2f%%\n", cpuUsage);
 	}
 }
@@ -46,7 +45,7 @@ int main(int argc, char *argv[])
 //do proc stat reader
 struct stats statReader(int PID)
 {
-	struct stats stat;
+	struct stats stat = {0};
 	char command[100];
 	sprintf(command, "cat /proc/%d/stat", PID);
 	FILE *f = popen(command, "r");
