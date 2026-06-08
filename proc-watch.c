@@ -31,15 +31,17 @@ int main(int argc, char *argv[])
 	int PID = getPID(argv[1]);
 	printf("PID: %d\n", PID);
 	
-	
+	while(true)
+	{
 	statReader(PID);
 	float usage1 = utime + stime;
-	sleep(5);
+	sleep(1);
 	statReader(PID);
 	float usage2 = utime + stime;
 
-	float cpuUsage = ((usage2 - usage1) / hertz) / 5;
-	printf("CPU usage: %f\n", cpuUsage);
+	float cpuUsage = ((usage2 - usage1) / hertz) / 1 * 100;
+	printf("CPU usage: %f%\n", cpuUsage);
+	}
 }
 
 //do proc stat reader
@@ -83,7 +85,7 @@ int statReader(int PID)
 			spaces++;
 		}	
 	}
-	printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %ld\n", utime, stime, cutime, cstime, startTime, hertz);
+	//printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %ld\n", utime, stime, cutime, cstime, startTime, hertz);
 	return 0;
 }
 
