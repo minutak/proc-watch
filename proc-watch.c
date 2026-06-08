@@ -7,18 +7,16 @@
 
 #define hertz (sysconf(_SC_CLK_TCK))
 
-int utime;
-int stime;
-int cutime;
-int cstime;
-int startTime;
-int upTime;
+struct stats{
+	int utime;
+	int stime;
+	int cutime;
+	int cstime;
+};
 
 int getPID(char *app);
-int statReader(int PID);
-float calculation();
-
-//Need to make cpu usage in some time interval
+struct stats statReader(int PID);
+float calculation(struct stats stat);
 
 int main(int argc, char *argv[])
 {
@@ -28,29 +26,31 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	struct stats stat;
 	int PID = getPID(argv[1]);
 	printf("PID: %d\n", PID);
 	
 	while(true)
 	{
-	statReader(PID);
-	float usage1 = utime + stime;
+	stat = statReader(PID);
+	float usage1 = calculation(stat);
 	sleep(1);
-	statReader(PID);
-	float usage2 = utime + stime;
+	stat = statReader(PID);
+	float usage2 = calculation(stat);
 
 	float cpuUsage = ((usage2 - usage1) / hertz) / 1 * 100;
-	printf("CPU usage: %f%\n", cpuUsage);
+	printf("CPU usage: %.2f%%\n", cpuUsage);
 	}
 }
 
 //do proc stat reader
-int statReader(int PID)
+struct stats statReader(int PID)
 {
+	struct stats stat;
 	char command[100];
 	sprintf(command, "cat /proc/%d/stat", PID);
 	FILE *f = popen(command, "r");
-	if(f == NULL) return 1;
+	if(f == NULL) return stat;
 	char buffer[2560];
 	int spaces = 0;
 
@@ -61,23 +61,19 @@ int statReader(int PID)
 	{	
 		if(spaces == 12)
 		{
-			utime = atoi(&buffer[i]);
+			stat.utime = atoi(&buffer[i]);
 		}
 		if(spaces == 13)
 		{
-			stime = atoi(&buffer[i]);
+			stat.stime = atoi(&buffer[i]);
 		}
 		if(spaces == 14)
 		{
-			cutime = atoi(&buffer[i]);
+			stat.cutime = atoi(&buffer[i]);
 		}
 		if (spaces == 16)
 		{
-			cstime = atoi(&buffer[i]);
-		}
-		if(spaces == 21)
-		{
-			startTime = atoi(&buffer[i]);
+			stat.cstime = atoi(&buffer[i]);
 			break;
 		}
 		if(isspace(buffer[i]))
@@ -86,20 +82,16 @@ int statReader(int PID)
 		}	
 	}
 	//printf("Utime: %d, Stime: %d, Cutime: %d, Cstime: %d, startTime: %d, Hertz: %ld\n", utime, stime, cutime, cstime, startTime, hertz);
-	return 0;
+	return stat;
 }
 
-float calculation()
-{
+float calculation(struct stats stat){
 	float totalTime;
-	float elapsedTime;
 
-	elapsedTime = upTime - (startTime / hertz);
-
-	totalTime = utime + stime;
-	totalTime += cutime + cstime;
+	totalTime = stat.utime + stat.stime;
+	totalTime += stat.cutime + stat.cstime;
 	
-	return ((totalTime / hertz) / elapsedTime);
+	return totalTime;
 }
 
 int getPID(char *app)
